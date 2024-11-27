@@ -1,10 +1,11 @@
+use std::ops::{Add, Mul};
 use bevy::prelude::*;
 use bevy::sprite::{MaterialMesh2dBundle, Mesh2dHandle};
 // use crate::components::Kinematic;
 // use crate::resources::EndTimer;
 
-// const GRAVITY: f32 = -18.0;
-// const MAX_HEIGHT: f32 = 35.0;
+const GRAVITY: f32 = -18.0;
+const MAX_HEIGHT: f32 = 25.0;
 const TARGET_DISTANCE: f32 = 66.0;
 const TARGET_HEIGHT: f32 = 9.0;
 
@@ -40,4 +41,20 @@ fn startup(
       ..default()
     },
   ));
+}
+
+fn calculate_launch_velocity_time(ball: Transform, target: Transform) -> (Vec3, f32) {
+  let displacement_y: f32 = ball.translation.y - target.translation.y;
+  let displacement_x: f32 = target.translation.x - ball.translation.x;
+  let time: f32 = ((-2.0 * MAX_HEIGHT / GRAVITY).sqrt() + (2.0 * (displacement_y - MAX_HEIGHT) / GRAVITY).sqrt());
+
+  let velocity_y: f32 = (2.0 * GRAVITY * MAX_HEIGHT).sqrt();
+  let velocity_x: f32 = displacement_x / time;
+
+  let velocity = Vec3::new(velocity_x, 0.0, 0.0)
+    .add(Vec3::new(0.0, velocity_y, 0.0))
+    .mul(Vec3::splat(-GRAVITY.signum()))
+  ;
+
+  (velocity, time)
 }

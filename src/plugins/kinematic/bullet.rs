@@ -1,7 +1,7 @@
 use bevy::prelude::*;
-use bevy::sprite::{MaterialMesh2dBundle, Mesh2dHandle};
-use crate::components::Kinematic;
-use crate::resources::EndTimer;
+use bevy::sprite::{ MaterialMesh2dBundle, Mesh2dHandle };
+use crate::components::kinematic::*;
+use crate::resources::*;
 
 const OFFSET_Y: f32 = -100.0;
 
@@ -27,40 +27,50 @@ fn startup(
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
+  let bullet = KinematicObject::new(Kinematic {
+    initial_velocity: Vec3::new(INITIAL_VELOCITY_B, 0.0, 0.0),
+    acceleration: Vec3::new(ACCELERATION_B, 0.0, 0.0),
+    displacement: Vec3::new(0.0, OFFSET_Y, 0.1),
+    ..default()
+  });
+
+  let target = KinematicObject::new(Kinematic {
+    initial_velocity: Vec3::new(INITIAL_VELOCITY_A, 0.0, 0.0),
+    acceleration: Vec3::new(ACCELERATION_A, 0.0, 0.0),
+    displacement: Vec3::new(DISPLACEMENT, OFFSET_Y, 0.0),
+    ..default()
+  });
+
   commands.spawn((
-    Kinematic::new(INITIAL_VELOCITY_A, ACCELERATION_A),
+    bullet.clone(),
     MaterialMesh2dBundle {
       mesh: Mesh2dHandle(meshes.add(Circle { radius: 10.0 })),
       material: materials.add(Color::hsl(0.0, 0.0, 1.0)),
-      transform: Transform::from_xyz(0.0, OFFSET_Y, 0.0),
+      transform: Transform::from_translation(bullet.kinematic.displacement),
       ..default()
     },
   ));
 
   commands.spawn((
-    Kinematic::new(INITIAL_VELOCITY_B, ACCELERATION_B),
+    target.clone(),
     MaterialMesh2dBundle {
       mesh: Mesh2dHandle(meshes.add(Circle { radius: 10.0 })),
-      material: materials.add(Color::hsl(0.0, 0.0, 1.0)),
-      transform: Transform::from_xyz(-DISPLACEMENT, OFFSET_Y, 0.1),
+      material: materials.add(Color::hsl(0.0, 0.95, 0.7)),
+      transform: Transform::from_translation(target.kinematic.displacement),
       ..default()
     },
   ));
 
-  let a: f32 = ACCELERATION_B - ACCELERATION_A;
-  let b: f32 = 2.0 * (INITIAL_VELOCITY_B - INITIAL_VELOCITY_A);
-  let c: f32 = -2.0 * DISPLACEMENT;
-  let e: f32 = (-b + (b.powi(2) - 4.0 * a * c).sqrt()) / (2.0 * a);
-
-  let timer = EndTimer(Timer::from_seconds(e, TimerMode::Once));
-  commands.insert_resource(timer);
+  let collision_time: f32 = bullet.kinematic.get_collision_time(target.kinematic);
+  commands.insert_resource(EndTimer(Timer::from_seconds(collision_time, TimerMode::Once)));
+  println!("The bullet will be perfectly aligned hit the target in {}sec", collision_time);
 }
 
-fn update(mut query: Query<(&mut Transform, &mut Kinematic)>, time: Res<Time>, mut timer: ResMut<EndTimer>) {
+fn update(mut query: Query<(&mut Transform, &mut KinematicObject)>, time: Res<Time>, mut timer: ResMut<EndTimer>) {
   if !timer.0.tick(time.delta()).finished() {
-    for (mut transform, mut kinematic) in &mut query {
-      kinematic.curent_velocity += kinematic.acceleration * time.delta_seconds();
-      transform.translation.x += kinematic.curent_velocity * time.delta_seconds();
+    for (mut transform, mut obj) in &mut query {
+      let delta_time: f32 = time.delta_seconds();
+      transform.translation += delta_time * obj.update_velocity(delta_time);
     }
   }
 }
