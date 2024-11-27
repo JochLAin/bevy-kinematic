@@ -30,14 +30,14 @@ fn startup(
   let bullet = KinematicObject::new(Kinematic {
     initial_velocity: Vec3::new(INITIAL_VELOCITY_B, 0.0, 0.0),
     acceleration: Vec3::new(ACCELERATION_B, 0.0, 0.0),
-    displacement: Vec3::new(0.0, OFFSET_Y, 0.1),
+    displacement: Vec3::new(-DISPLACEMENT, OFFSET_Y, 0.1),
     ..default()
   });
 
   let target = KinematicObject::new(Kinematic {
     initial_velocity: Vec3::new(INITIAL_VELOCITY_A, 0.0, 0.0),
     acceleration: Vec3::new(ACCELERATION_A, 0.0, 0.0),
-    displacement: Vec3::new(DISPLACEMENT, OFFSET_Y, 0.0),
+    displacement: Vec3::new(0.0, OFFSET_Y, 0.0),
     ..default()
   });
 

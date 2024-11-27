@@ -26,9 +26,14 @@ pub struct Kinematic {
 
 impl Kinematic {
   pub fn get_collision_time(&self, target: Kinematic) -> f32 {
-    let a: f32 = (self.acceleration - target.acceleration).length();
-    let b: f32 = 2.0 * (self.initial_velocity - target.initial_velocity).length();
-    let c: f32 = -2.0 * (self.displacement - target.displacement).abs().length();
+    let diff_a: Vec3 = self.acceleration - target.acceleration;
+    let a: f32 = diff_a.length() * diff_a.dot(Vec3::ONE).signum();
+
+    let diff_b: Vec3 = self.initial_velocity - target.initial_velocity;
+    let b: f32 = 2.0 * diff_b.length() * diff_b.dot(Vec3::ONE).signum();
+
+    let diff_c: Vec3 = self.displacement - target.displacement;
+    let c: f32 = -2.0 * diff_c.length();
 
     println!("a: {}, b: {}, c: {}", a, b, c);
 
