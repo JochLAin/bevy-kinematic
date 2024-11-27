@@ -35,8 +35,6 @@ impl Kinematic {
     let diff_c: Vec3 = self.displacement - target.displacement;
     let c: f32 = -2.0 * diff_c.length();
 
-    println!("a: {}, b: {}, c: {}", a, b, c);
-
     (-b + (b * b - 4.0 * a * c).sqrt()) / (2.0 * a)
   }
 }

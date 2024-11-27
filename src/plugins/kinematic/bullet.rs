@@ -63,7 +63,7 @@ fn startup(
 
   let collision_time: f32 = bullet.kinematic.get_collision_time(target.kinematic);
   commands.insert_resource(EndTimer(Timer::from_seconds(collision_time, TimerMode::Once)));
-  println!("The bullet will be perfectly aligned hit the target in {}sec", collision_time);
+  println!("The bullet will be perfectly aligned with the target in {}sec", collision_time);
 }
 
 fn update(mut query: Query<(&mut Transform, &mut KinematicObject)>, time: Res<Time>, mut timer: ResMut<EndTimer>) {
