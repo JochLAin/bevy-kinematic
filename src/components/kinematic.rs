@@ -19,24 +19,12 @@ use bevy::prelude::*;
 pub struct Kinematic {
   pub displacement: Vec3,
   pub initial_velocity: Vec3,
-  pub final_velocity: Vec3,
+  // pub final_velocity: Vec3,
   pub acceleration: Vec3,
-  pub time: f32,
+  // pub time: f32,
 }
 
 impl Kinematic {
-  pub fn get_collision_time(&self, target: Kinematic) -> f32 {
-    let diff_a: Vec3 = self.acceleration - target.acceleration;
-    let a: f32 = diff_a.length() * diff_a.dot(Vec3::ONE).signum();
-
-    let diff_b: Vec3 = self.initial_velocity - target.initial_velocity;
-    let b: f32 = 2.0 * diff_b.length() * diff_b.dot(Vec3::ONE).signum();
-
-    let diff_c: Vec3 = self.displacement - target.displacement;
-    let c: f32 = -2.0 * diff_c.length();
-
-    (-b + (b * b - 4.0 * a * c).sqrt()) / (2.0 * a)
-  }
 }
 
 impl Default for Kinematic {
@@ -44,9 +32,9 @@ impl Default for Kinematic {
     Kinematic {
       displacement: Vec3::ZERO,
       initial_velocity: Vec3::ZERO,
-      final_velocity: Vec3::ZERO,
+      // final_velocity: Vec3::ZERO,
       acceleration: Vec3::ZERO,
-      time: 0.0,
+      // time: 0.0,
     }
   }
 }
@@ -63,6 +51,31 @@ impl KinematicObject {
       current_velocity: kinematic.initial_velocity,
       kinematic,
     }
+  }
+
+  pub fn get_collision_time(&self, target: Kinematic) -> f32 {
+    let diff_a: Vec3 = self.kinematic.acceleration - target.acceleration;
+    let a: f32 = diff_a.length();
+
+    let diff_b: Vec3 = self.kinematic.initial_velocity - target.initial_velocity;
+    let b: f32 = 2.0 * diff_b.length() * diff_b.dot(Vec3::ONE).signum();
+
+    let diff_c: Vec3 = self.kinematic.displacement - target.displacement;
+    let c: f32 = -2.0 * diff_c.length();
+
+    (-b + (b * b - 4.0 * a * c).sqrt()) / (2.0 * a)
+  }
+
+  pub fn set_initial_velocity_for_arc_throw(&mut self, target: Vec3, max_height: f32, gravity: f32) -> f32 {
+    let u_up: f32 = (-2.0 * gravity * max_height).sqrt();
+    let t_up: f32 = (-2.0 * max_height / gravity).sqrt();
+    let t_down: f32 = (2.0 * ((target.y - self.kinematic.displacement.y) - max_height) / gravity).sqrt();
+    let u_right: f32 = (target.x - self.kinematic.displacement.x) / (t_up + t_down);
+
+    self.kinematic.initial_velocity = Vec3::new(u_right, u_up * -gravity.signum(), 0.0);
+    self.current_velocity = self.kinematic.initial_velocity;
+
+    t_up + t_down
   }
 
   pub fn update_velocity(&mut self, time_delta: f32) -> Vec3 {

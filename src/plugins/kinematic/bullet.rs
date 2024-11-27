@@ -1,7 +1,6 @@
 use bevy::prelude::*;
 use bevy::sprite::{ MaterialMesh2dBundle, Mesh2dHandle };
 use crate::components::kinematic::*;
-use crate::resources::*;
 
 const OFFSET_Y: f32 = -100.0;
 
@@ -11,9 +10,15 @@ const INITIAL_VELOCITY_B: f32 = 1.0;
 const ACCELERATION_B: f32 = 17.0;
 const DISPLACEMENT: f32 = 80.0;
 
-pub struct KinematicBulletPlugin;
+#[derive(Component)]
+pub struct BulletExercise;
 
-impl Plugin for KinematicBulletPlugin {
+#[derive(Resource)]
+pub struct BulletEndTimer(pub Timer);
+
+pub struct BulletPlugin;
+
+impl Plugin for BulletPlugin {
   fn build(&self, app: &mut App) {
     app
       .add_systems(Startup, startup)
@@ -42,6 +47,7 @@ fn startup(
   });
 
   commands.spawn((
+    BulletExercise,
     bullet.clone(),
     MaterialMesh2dBundle {
       mesh: Mesh2dHandle(meshes.add(Circle { radius: 10.0 })),
@@ -52,21 +58,22 @@ fn startup(
   ));
 
   commands.spawn((
+    BulletExercise,
     target.clone(),
     MaterialMesh2dBundle {
-      mesh: Mesh2dHandle(meshes.add(Circle { radius: 10.0 })),
+      mesh: Mesh2dHandle(meshes.add(Circle { radius: 11.0 })),
       material: materials.add(Color::hsl(0.0, 0.95, 0.7)),
       transform: Transform::from_translation(target.kinematic.displacement),
       ..default()
     },
   ));
 
-  let collision_time: f32 = bullet.kinematic.get_collision_time(target.kinematic);
-  commands.insert_resource(EndTimer(Timer::from_seconds(collision_time, TimerMode::Once)));
+  let collision_time: f32 = bullet.get_collision_time(target.kinematic);
+  commands.insert_resource(BulletEndTimer(Timer::from_seconds(collision_time, TimerMode::Once)));
   println!("The bullet will be perfectly aligned with the target in {}sec", collision_time);
 }
 
-fn update(mut query: Query<(&mut Transform, &mut KinematicObject)>, time: Res<Time>, mut timer: ResMut<EndTimer>) {
+fn update(mut query: Query<(&mut Transform, &mut KinematicObject), With<BulletExercise>>, time: Res<Time>, mut timer: ResMut<BulletEndTimer>) {
   if !timer.0.tick(time.delta()).finished() {
     for (mut transform, mut obj) in &mut query {
       let delta_time: f32 = time.delta_seconds();
